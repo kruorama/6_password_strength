@@ -1,9 +1,46 @@
 # Password Strength Calculator
+The script analyses a password and evaluates it, giving a score from 0 to 10 (most likely there are no passwords that would score 0 though)
 
-[TODO. There will be project description]
+### Description
+Service features:
+* Accepts a path to a black list as an argument. Tested with this password black list: https://github.com/danielmiessler/SecLists/blob/master/Passwords/Common-Credentials/10-million-password-list-top-100.txt
+* Gets password from user through getpass so that all symbols are read as a string.
+* Prints the score with details
+
+Core features:
+* Checks the password length, scores positive if between 8 and 32
+* Checks for at least one numerical digit
+* Checks for at least one letter symbol
+* Checks for both upper- and lowercase symbols
+* Checks for having more than 3 same symbols in a row
+* Checks for allowed special symbols: ```!"#$%&'()*+,-./:;<=>?@[\]^_`{|}]```
+* Checks if the password matches the given black list
+* Checks if the numbers in password can be read as a date and scores negative in that case
+* If there's a number sequence 7-15 symbols long, assumes it's a phone number and scores negative
 
 
-* Uses this password black list: https://github.com/danielmiessler/SecLists/blob/master/Passwords/Common-Credentials/10-million-password-list-top-100.txt
+### How to launch
+
+Example of script launch on Linux, Python 3.5:
+
+```
+$ python password_strength.py <path to black list file>
+Password:
+234
+Password strength is 5 out of 10
++ All characters in password are allowed
+- Too short
++ Has at least one numerical symbol
+- Doesn't have letter symbols
+- Doesn't have upper- and lowercase symbols
++ Hasn't more than 3 similar characters in a row
+- Doesn't have any allowed special characters
+- Is in black list
++ Doesn't have a date
++ Doesn't have a detectable phone number
+```
+
+
 
 # Project Goals
 

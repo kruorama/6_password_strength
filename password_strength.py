@@ -14,12 +14,14 @@ def get_parser_args():
     args = parser.parse_args()
     return args
 
+
 def check_allowed_symbols(password):
     regex = '[ -~]'
     if re.match(regex, password):
         return True, 'All characters in password are allowed'
     else:
         return False, 'Has not ASCII printable characters'
+
 
 def check_length(password):
     if len(password) > 32:
@@ -60,6 +62,7 @@ def check_repeating_symbols(password):
     else:
         return True, "Hasn't more than 3 similar characters in a row"
 
+
 def check_special_symbols(password):
     regex = '[!\"\#\$\%\&\'\(\)\*\+\,\-\.\/\:\;\<\=\>\?@\[\\]\^\_\`{\|}]'
     if re.search(regex, password):
@@ -87,6 +90,8 @@ def check_black_list(password, black_list):
 def check_calendar_dates(password):
     regex = '[0-9]{4,9}'
     match_obj = re.match(regex, password)
+    if match_obj is None:
+        return True, "Doesn't have a date"
     numbers_str = match_obj.group(0)
 
     if numbers_str:
@@ -108,17 +113,20 @@ def check_telephone_numbers(password):
 
 
 def calculate_password_strength(password):
-    strength =
-    check_allowed_symbols(password)[0] +
-    check_length(password)[0] +
-    check_numerical_digits(password)[0] +
-    check_letters(password)[0] +
-    status, message = check_case(password)
-    status, message = check_repeating_symbols(password)
-    status, message = check_special_symbols(password)
-    status, message = check_black_list(password, black_list)
-    status, message = check_calendar_dates(password)
-    check_telephone_numbers(password)
+    strength = (
+                check_allowed_symbols(password)[0] +
+                check_length(password)[0] +
+                check_numerical_digits(password)[0] +
+                check_letters(password)[0] +
+                check_case(password)[0] +
+                check_repeating_symbols(password)[0] +
+                check_special_symbols(password)[0] +
+                check_black_list(password, black_list)[0] +
+                check_calendar_dates(password)[0] +
+                check_telephone_numbers(password)[0]
+                )
+    return strength
+
 
 def print_check_result(*arguments):
     if arguments[0][0]:
@@ -134,9 +142,10 @@ if __name__ == '__main__':
         exit('File is not found')
 
     password = getpass.getpass()
-    print(password) #don't forget to remove
+    print(password)
 
-
+    print('Password strength is {} out of 10'.format(
+        calculate_password_strength(password)))
     print_check_result(check_allowed_symbols(password))
     print_check_result(check_length(password))
     print_check_result(check_numerical_digits(password))

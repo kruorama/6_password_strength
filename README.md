@@ -26,18 +26,9 @@ Example of script launch on Linux, Python 3.5:
 ```
 $ python password_strength.py <path to black list file>
 Password:
-234
-Password strength is 5 out of 10
-+ All characters in password are allowed
-- Too short
-+ Has at least one numerical symbol
-- Doesn't have letter symbols
-- Doesn't have upper- and lowercase symbols
-+ Hasn't more than 3 similar characters in a row
-- Doesn't have any allowed special characters
-- Is in black list
-+ Doesn't have a date
-+ Doesn't have a detectable phone number
+Password strength is 7 out of 10
+Password too short or too long
+Doesn't have both upper- and lowercase symbols
 ```
 
 

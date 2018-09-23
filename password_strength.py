@@ -1,6 +1,7 @@
 import re
 import getpass
 import argparse
+import string
 from dateutil.parser import parse
 
 
@@ -9,150 +10,168 @@ def get_parser_args():
         description='Input path to password black list')
 
     parser.add_argument(
-        'filepath',
-        help='Path to a password black_list')
+        '-f',
+        '--filepath',
+        help='Path to a password blacklist')
+
     args = parser.parse_args()
     return args
 
 
 def check_allowed_symbols(password):
     regex = '[ -~]'
-    if re.match(regex, password):
-        return True, 'All characters in password are allowed'
+    if re.search(regex, password):
+        return True
     else:
-        return False, 'Has not ASCII printable characters'
+        return False
 
 
-def check_length(password):
-    if len(password) > 32:
-        return False, 'Too long'
-    if len(password) < 8:
-        return False, 'Too short'
-    return True, 'Password length is just right'
+def check_length(password, min_length, max_length):
+    if len(password) > max_length:
+        return False
+    if len(password) < min_length:
+        return False
+    return True
 
 
 def check_numerical_digits(password):
     regex = '[0-9]'
     if re.search(regex, password):
-        return True, 'Has at least one numerical symbol'
+        return True
     else:
-        return False, ("Doesn't have numerical digits")
+        return False
 
 
 def check_letters(password):
     regex = '[A-Za-z]'
     if re.search(regex, password):
-        return True, 'Has at least one letter symbol'
+        return True
     else:
-        return False, ("Doesn't have letter symbols")
+        return False
 
 
 def check_case(password):
     regex = '[a-z].*[A-Z]|[A-Z].*[a-z]'
     if re.search(regex, password):
-        return True, 'Has upper- and lowercase symbols'
+        return True
     else:
-        return False, "Doesn't have upper- and lowercase symbols"
+        return False
 
 
 def check_repeating_symbols(password):
     regex = r'(.)\1{3,}'
     if re.search(regex, password):
-        return False, 'Has 4 or more similar characters in a row'
+        return False
     else:
-        return True, "Hasn't more than 3 similar characters in a row"
+        return True
 
 
 def check_special_symbols(password):
-    regex = '[!\"\#\$\%\&\'\(\)\*\+\,\-\.\/\:\;\<\=\>\?@\[\\]\^\_\`{\|}]'
+    regex = string.punctuation
     if re.search(regex, password):
-        return True, 'Has allowed special characters'
+        return True
     else:
-        return False, ("Doesn't have any allowed special characters")
+        return False
 
 
-def load_black_list(filepath):
-    try:
-        with open(filepath, 'r') as file_handler:
-            black_list = file_handler.read()
-        return black_list
-    except FileNotFoundError:
+def load_blacklist_str(filepath):
+    if filepath is not None:
+        try:
+            with open(filepath, 'r') as file_handler:
+                blacklist_str = file_handler.read()
+            return blacklist_str
+        except FileNotFoundError:
+            return None
+    else:
         return None
 
 
-def check_black_list(password, black_list):
-    if re.search(password, black_list, re.IGNORECASE):
-        return False, 'Is in black list'
+def check_blacklist(password, blacklist_str):
+    if blacklist_str is None:
+        return True
+    if re.search(password, blacklist_str, re.IGNORECASE):
+        return False
     else:
-        return True, ("Isn't in black_list")
+        return True
 
 
 def check_calendar_dates(password):
     regex = '[0-9]{4,9}'
     match_obj = re.match(regex, password)
     if match_obj is None:
-        return True, "Doesn't have a date"
+        return True
     numbers_str = match_obj.group(0)
 
     if numbers_str:
         try:
             parse(numbers_str)
-            return False, 'Has a date'
+            return False
         except ValueError:
-            return True, "Doesn't have a date"
+            return True
     else:
-        return True, "Doesn't have a date"
+        return True
 
 
 def check_telephone_numbers(password):
     regex = '[0-9]{7,15}'
     if re.match(regex, password):
-        return False, 'Likely has a phone number'
+        return False
     else:
-        return True, "Doesn't have a detectable phone number"
+        return True
 
 
-def calculate_password_strength(password):
-    strength = (
-                check_allowed_symbols(password)[0] +
-                check_length(password)[0] +
-                check_numerical_digits(password)[0] +
-                check_letters(password)[0] +
-                check_case(password)[0] +
-                check_repeating_symbols(password)[0] +
-                check_special_symbols(password)[0] +
-                check_black_list(password, black_list)[0] +
-                check_calendar_dates(password)[0] +
-                check_telephone_numbers(password)[0]
-                )
+def get_results_lst(password, blacklist_str):
+    results_lst = [
+        (check_allowed_symbols(password),
+            '- Has no ASCII printable characters'),
+        (check_length(password, 8, 32),
+            '- Password too short or too long'),
+        (check_numerical_digits(password),
+            "- Doesn't have numerical digits"),
+        (check_letters(password),
+            "- Doesn't have letter symbols"),
+        (check_case(password),
+            "- Doesn't have both upper- and lowercase symbols"),
+        (check_repeating_symbols(password),
+            "- Has more than 3 similar characters in a row"),
+        (check_special_symbols(password),
+            "Doesn't have any allowed special characters"),
+        (check_blacklist(password, blacklist_str),
+            '- Is in blacklist'),
+        (check_calendar_dates(password),
+            "- Has a date"),
+        (check_telephone_numbers(password),
+            "- Has a phone number")
+    ]
+
+    return results_lst
+
+
+def calculate_password_strength(results_lst):
+    score_lst = []
+    for result in results_lst:
+        score_lst.append(result[0])
+    strength = sum(score_lst)
     return strength
 
 
-def print_check_result(*arguments):
-    if arguments[0][0]:
-        print('+ {}'.format(arguments[0][1]))
-    else:
-        print('- {}'.format(arguments[0][1]))
+def print_errors(results_lst):
+    for status, error_text in results_lst:
+        if not status:
+            print(error_text)
 
 
 if __name__ == '__main__':
     args = get_parser_args()
-    black_list = load_black_list(args.filepath)
-    if black_list is None:
-        exit('File is not found')
+    filepath = args.filepath
+
+    if filepath is None:
+        print('Will not be checked for blacklist')
+
+    blacklist_str = load_blacklist_str(filepath)
 
     password = getpass.getpass()
-    print(password)
-
+    results_lst = get_results_lst(password, blacklist_str)
     print('Password strength is {} out of 10'.format(
-        calculate_password_strength(password)))
-    print_check_result(check_allowed_symbols(password))
-    print_check_result(check_length(password))
-    print_check_result(check_numerical_digits(password))
-    print_check_result(check_letters(password))
-    print_check_result(check_case(password))
-    print_check_result(check_repeating_symbols(password))
-    print_check_result(check_special_symbols(password))
-    print_check_result(check_black_list(password, black_list))
-    print_check_result(check_calendar_dates(password))
-    print_check_result(check_telephone_numbers(password))
+        calculate_password_strength(results_lst)))
+    print_errors(results_lst)

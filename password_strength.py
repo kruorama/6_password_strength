@@ -67,7 +67,7 @@ def check_repeating_symbols(password):
 
 
 def check_special_symbols(password):
-    regex = string.punctuation
+    regex = '[' + string.punctuation + ']'
     if re.search(regex, password):
         return True
     else:
@@ -135,7 +135,7 @@ def get_results_lst(password, blacklist_str):
         (check_repeating_symbols(password),
             "- Has more than 3 similar characters in a row"),
         (check_special_symbols(password),
-            "Doesn't have any allowed special characters"),
+            "- Doesn't have any allowed special characters"),
         (check_blacklist(password, blacklist_str),
             '- Is in blacklist'),
         (check_calendar_dates(password),

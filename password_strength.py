@@ -121,10 +121,12 @@ def check_telephone_numbers(password):
 
 
 def get_results_lst(password, blacklist_str):
+    min_length = 8
+    max_length = 32
     results_lst = [
         (check_allowed_symbols(password),
             '- Has no ASCII printable characters'),
-        (check_length(password, 8, 32),
+        (check_length(password, min_length, max_length),
             '- Password too short or too long'),
         (check_numerical_digits(password),
             "- Doesn't have numerical digits"),

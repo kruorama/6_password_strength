@@ -20,76 +20,55 @@ def get_parser_args():
 
 def check_allowed_symbols(password):
     regex = '[ -~]'
-    if re.search(regex, password):
-        return True
-    else:
-        return False
+    return bool(re.search(regex, password))
 
 
 def check_length(password, min_length, max_length):
-    if len(password) > max_length:
-        return False
-    if len(password) < min_length:
-        return False
-    return True
+    return min_length < len(password) < max_length
 
 
 def check_numerical_digits(password):
     regex = '[0-9]'
-    if re.search(regex, password):
-        return True
-    else:
-        return False
+    return bool(re.search(regex, password))
 
 
 def check_letters(password):
     regex = '[A-Za-z]'
-    if re.search(regex, password):
-        return True
-    else:
-        return False
+    return bool(re.search(regex, password))
 
 
 def check_case(password):
     regex = '[a-z].*[A-Z]|[A-Z].*[a-z]'
-    if re.search(regex, password):
-        return True
-    else:
-        return False
+    return bool(re.search(regex, password))
 
 
 def check_repeating_symbols(password):
     regex = r'(.)\1{3,}'
-    if re.search(regex, password):
-        return False
-    else:
-        return True
+    return not bool(re.search(regex, password))
 
 
 def check_special_symbols(password):
-    regex = '[' + string.punctuation + ']'
-    if re.search(regex, password):
-        return True
-    else:
-        return False
+    regex = '[{}]'.format(string.punctuation)
+    return bool(re.search(regex, password))
 
 
-def load_blacklist_str(filepath):
+def load_blacklist(filepath):
     if filepath is not None:
         try:
             with open(filepath, 'r') as file_handler:
                 blacklist_str = file_handler.read()
-            return blacklist_str
+                blacklist = blacklist_str.split()
+            return blacklist
         except FileNotFoundError:
             return None
     else:
         return None
 
 
-def check_blacklist(password, blacklist_str):
-    if blacklist_str is None:
+def check_blacklist(password, blacklist):
+    if blacklist is None:
         return True
-    if re.search(password, blacklist_str, re.IGNORECASE):
+    if password in blacklist:
         return False
     else:
         return True
@@ -114,10 +93,7 @@ def check_calendar_dates(password):
 
 def check_telephone_numbers(password):
     regex = '[0-9]{7,15}'
-    if re.match(regex, password):
-        return False
-    else:
-        return True
+    return not bool(re.match(regex, password))
 
 
 def get_results_lst(password, blacklist_str):
@@ -149,18 +125,14 @@ def get_results_lst(password, blacklist_str):
     return results_lst
 
 
-def calculate_password_strength(results_lst):
-    score_lst = []
-    for result in results_lst:
-        score_lst.append(result[0])
-    strength = sum(score_lst)
-    return strength
-
-
-def print_errors(results_lst):
+def print_results(results_lst):
+    score = 0
     for status, error_text in results_lst:
+        if status:
+            score += 1
         if not status:
             print(error_text)
+    print('Password strength is {} out of 10'.format(score))
 
 
 if __name__ == '__main__':
@@ -170,10 +142,11 @@ if __name__ == '__main__':
     if filepath is None:
         print('Will not be checked for blacklist')
 
-    blacklist_str = load_blacklist_str(filepath)
+    blacklist = load_blacklist(filepath)
 
     password = getpass.getpass()
-    results_lst = get_results_lst(password, blacklist_str)
-    print('Password strength is {} out of 10'.format(
-        calculate_password_strength(results_lst)))
-    print_errors(results_lst)
+    print(password)
+
+    results_lst = get_results_lst(password, blacklist)
+
+    print_results(results_lst)
